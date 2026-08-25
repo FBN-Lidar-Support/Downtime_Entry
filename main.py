@@ -10,9 +10,37 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QDateTi
 from csv_manager import CSVManager
 from add_dialog import AddDowntimeDialog
 
-BASE_DIR = Path(__file__).resolve().parent
-UI_PATH = BASE_DIR / "UI" / "downtime_entry.ui"
-CONFIG_PATH = BASE_DIR / "config.ini"
+# ============================================================
+# PATH FOR UI / RESOURCE
+# ============================================================
+def resource_path(relative_path):
+    """
+    ใช้สำหรับไฟล์ที่ Bundle เข้า EXE
+    เช่น .ui
+    """
+    if getattr(sys, "frozen", False):
+        base_path = Path(sys._MEIPASS)
+    else:
+        base_path = Path(__file__).resolve().parent
+    return base_path / relative_path
+# ============================================================
+# PATH FOR EXTERNAL FILE
+# ============================================================
+def app_path(relative_path):
+    """
+    ใช้สำหรับไฟล์ที่อยู่ข้าง EXE
+    เช่น config.ini
+    """
+    if getattr(sys, "frozen", False):
+        base_path = Path(sys.executable).resolve().parent
+    else:
+        base_path = Path(__file__).resolve().parent
+    return base_path / relative_path
+# ============================================================
+# FILE PATH
+# ============================================================
+UI_PATH = resource_path("UI/downtime_entry.ui")
+CONFIG_PATH = app_path("config.ini")
 
 class MainWindow(QMainWindow):
     def __init__(self):

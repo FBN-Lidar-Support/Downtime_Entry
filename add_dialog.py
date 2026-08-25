@@ -1,15 +1,22 @@
+import sys
 from pathlib import Path
 from PyQt6 import uic
 from PyQt6.QtCore import QDateTime
 from PyQt6.QtGui import QIntValidator
 from PyQt6.QtWidgets import QDialog, QMessageBox
 
-BASE_DIR = Path(__file__).resolve().parent
-ADD_UI_PATH = (BASE_DIR / "ui" / "add_downtime.ui")
+def resource_path(relative_path):
+    if getattr(sys, "frozen", False):
+        base_path = Path(sys._MEIPASS)
+    else:
+        base_path = Path(__file__).resolve().parent
+    return base_path / relative_path
+UI_PATH = resource_path("UI/add_downtime.ui")
+
 class AddDowntimeDialog(QDialog):
     def __init__(self, machine, downtime_types, parent=None):
         super().__init__(parent)
-        uic.loadUi(ADD_UI_PATH, self)
+        uic.loadUi(UI_PATH, self)
         self.machine = machine
         # ==========================================
         # TYPE DOWNTIME
