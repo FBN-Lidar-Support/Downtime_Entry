@@ -117,6 +117,7 @@ class MainWindow(QMainWindow):
         # Column ปกติ
         # ความกว้างตาม Header หรือ Value ที่ยาวที่สุด
         header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         # Column 4 = Timestamp Check Out
         # เป็น QDateTimeEdit จึงให้กำหนดขนาดเอง
         header.setSectionResizeMode(4, QHeaderView.ResizeMode.Interactive)
@@ -214,8 +215,8 @@ class MainWindow(QMainWindow):
             # ----------------------------------------------------
             # Status
             # ----------------------------------------------------
-            self.currentTable.setItem(table_row, 6, QTableWidgetItem("Open"))
-            status_item = QTableWidgetItem("open")
+            self.currentTable.setItem(table_row, 6, QTableWidgetItem("OPENED"))
+            status_item = QTableWidgetItem("OPENED")
             status_item.setBackground(QColor("#FFA500"))
             status_item.setForeground(QColor("#000000"))
             self.currentTable.setItem(table_row, 6, status_item)
@@ -251,9 +252,9 @@ class MainWindow(QMainWindow):
         # แสดง Duration
         self.currentTable.item(table_row, 5).setText(str(duration_hr))
         # เปลี่ยน Status เฉพาะใน UI
-        self.currentTable.item(table_row, 6).setText("Closed")
+        self.currentTable.item(table_row, 6).setText("CLOSED")
         status_item = self.currentTable.item(table_row, 6)
-        status_item.setText("Closed")
+        status_item.setText("CLOSED")
         status_item.setBackground(QColor("#28A745"))
         status_item.setForeground(QColor("#FFFFFF"))
         checkout_edit.setStyleSheet("""

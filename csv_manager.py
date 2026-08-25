@@ -44,7 +44,7 @@ class CSVManager:
         if df.empty:
             return df
         
-        open_df = df[df["Status"].fillna("").str.strip().str.lower() == "open"].copy()
+        open_df = df[df["Status"].fillna("").str.strip().str.upper() == "OPENED"].copy()
         open_df["_csv_index"] = open_df.index
         return open_df.reset_index(drop=True)
         
@@ -79,7 +79,7 @@ class CSVManager:
             "EN Check Out": "",
             "Timestamp Check Out": "",
             "Duration (hr)": "",
-            "Status": "Open"
+            "Status": "OPENED"
         }
         df.loc[len(df)] = new_row
         file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -97,10 +97,10 @@ class CSVManager:
                 continue
             # ต้องยังเป็น Open เท่านั้น
             status = str(df.at[csv_index, "Status"]).strip().lower()
-            if status != "open":
+            if status != "OPENED":
                 continue
             df.at[csv_index, "EN Check Out"] = en_checkout
             df.at[csv_index, "Timestamp Check Out"] = update["checkout"]
             df.at[csv_index, "Duration (hr)"] = update["duration"]
-            df.at[csv_index, "Status"] = "Closed"
+            df.at[csv_index, "Status"] = "CLOSED"
         df.to_csv(file_path, index=False, encoding="utf-8-sig")
