@@ -1,0 +1,106 @@
+from pathlib import Path
+import pandas as pd
+
+CSV_COLUMNS = [
+    "Machine",
+    "Type Downtime",
+    "Detail",
+    "EN Check In",
+    "Timestamp Check In",
+    "EN Check Out",
+    "Timestamp Check Out",
+    "Duration (hr)",
+    "Status"
+]
+
+class CSVManager:
+    def __init__(self, downtime_dir, downtime_type_dir):
+        self.downtime_dir = Path(downtime_dir)
+        self.downtime_type_dir = Path(downtime_type_dir)
+    # ========================================================
+    # GET CSV PATH
+    # ========================================================
+    def get_machine_file(self, machine):
+        return self.downtime_dir / f"{machine}.csv"
+    
+    # ========================================================
+    # READ MACHINE CSV
+    # ========================================================
+    def read_machine(self, machine):
+        file_path = self.get_machine_file(machine)
+        print(file_path)
+        # ถ้ายังไม่มีไฟล์
+        if not file_path.exists():
+            return pd.DataFrame(columns=CSV_COLUMNS)
+        df = pd.read_csv(file_path, dtype=str)
+        df.columns = (df.columns.astype(str).str.strip())
+        return df
+    
+    # ========================================================
+    # GET OPEN DOWNTIME
+    # ========================================================
+    def get_open_downtime(self, machine):
+        df = self.read_machine(machine)
+        if df.empty:
+            return df
+        
+        open_df = df[df["Status"].fillna("").str.strip().str.lower() == "open"].copy()
+        open_df["_csv_index"] = open_df.index
+        return open_df.reset_index(drop=True)
+        
+    # ============================================================
+    # GET DOWNTIME TYPES
+    # ============================================================
+    def get_downtime_types(self, machine):
+        type_file = self.downtime_type_dir / f"{machine}.csv"
+        if not type_file.exists():
+            return []
+        df = pd.read_csv(type_file, dtype=str, encoding="utf-8-sig")
+        df.columns = df.columns.str.strip()
+        if "Type Downtime" not in df.columns:
+            return []
+        # ถ้ามี Active ก็เอาเฉพาะ Active = 1
+        if "Active" in df.columns:
+            df = df[df["Active"].fillna("").str.strip() == "1"]
+        return (df["Type Downtime"].dropna().astype(str).str.strip().loc[lambda x: x != ""].tolist())
+    
+    # ============================================================
+    # ADD NEW DOWNTIME
+    # ============================================================
+    def add_downtime(self, machine, downtime_type, detail, en_checkin, checkin_time):
+        file_path = self.get_machine_file(machine)
+        df = self.read_machine(machine)
+        new_row = {
+            "Machine": machine,
+            "Type Downtime": downtime_type,
+            "Detail": detail,
+            "EN Check In": en_checkin,
+            "Timestamp Check In": checkin_time,
+            "EN Check Out": "",
+            "Timestamp Check Out": "",
+            "Duration (hr)": "",
+            "Status": "Open"
+        }
+        df.loc[len(df)] = new_row
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        df.to_csv(file_path, index=False, encoding="utf-8-sig")
+        
+    # ============================================================
+    # CLOSE DOWNTIME
+    # ============================================================
+    def close_downtime(self, machine, pending_close, en_checkout):
+        file_path = self.get_machine_file(machine)
+        df = self.read_machine(machine)
+        for csv_index, update in pending_close.items():
+            csv_index = int(csv_index)
+            if csv_index not in df.index:
+                continue
+            # ต้องยังเป็น Open เท่านั้น
+            status = str(df.at[csv_index, "Status"]).strip().lower()
+            if status != "open":
+                continue
+            df.at[csv_index, "EN Check Out"] = en_checkout
+            df.at[csv_index, "Timestamp Check Out"] = update["checkout"]
+            df.at[csv_index, "Duration (hr)"] = update["duration"]
+            df.at[csv_index, "Status"] = "Closed"
+        df.to_csv(file_path, index=False, encoding="utf-8-sig")
