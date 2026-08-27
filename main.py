@@ -45,7 +45,6 @@ CONFIG_PATH = app_path("config.ini")
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        print(UI_PATH)
         uic.loadUi(UI_PATH, self)
         self.pending_close = {}
         
@@ -371,7 +370,7 @@ class MainWindow(QMainWindow):
         # WRITE CSV
         # ========================================================
         try:
-            self.csv_manager.close_downtime(machine=machine, pending_close=self.pending_close, en_checkout=en_checkout)
+            updated_count = self.csv_manager.close_downtime(machine=machine, pending_close=self.pending_close, en_checkout=en_checkout)
         except Exception as e:
             QMessageBox.critical(self, "Save Error", str(e))
             return
@@ -380,7 +379,7 @@ class MainWindow(QMainWindow):
         # ========================================================
         self.pending_close.clear()
         self.saveButton.setEnabled(False)
-        QMessageBox.information(self, "Success", "Downtime saved successfully.")
+        QMessageBox.information(self, "Success", f"{updated_count} Downtime record(s) closed successfully.")
         # Reload
         # Row ที่ Closed แล้วจะหายจาก Current Open
         self.load_open_downtime(machine)

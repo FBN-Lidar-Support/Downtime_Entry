@@ -28,7 +28,6 @@ class CSVManager:
     # ========================================================
     def read_machine(self, machine):
         file_path = self.get_machine_file(machine)
-        print(file_path)
         # ถ้ายังไม่มีไฟล์
         if not file_path.exists():
             return pd.DataFrame(columns=CSV_COLUMNS)
@@ -91,16 +90,29 @@ class CSVManager:
     def close_downtime(self, machine, pending_close, en_checkout):
         file_path = self.get_machine_file(machine)
         df = self.read_machine(machine)
+
+        updateed_count = 0
+
+        print(f"Closing downtime file: {file_path}")
+        print(f"Pending close: {pending_close}")
+
         for csv_index, update in pending_close.items():
             csv_index = int(csv_index)
             if csv_index not in df.index:
-                continue
-            # ต้องยังเป็น Open เท่านั้น
-            status = str(df.at[csv_index, "Status"]).strip().lower()
-            if status != "OPENED":
-                continue
-            df.at[csv_index, "EN Check Out"] = en_checkout
+                raise ValueError(f"CSV row {csv_index} not found in {machine}.csv")
+            current_status = str(df.at[csv_index, "Status"]).strip().upper()
+            if current_status != "OPENED":
+                raise ValueError(f"CSV row {csv_index} is not OPENED.", f"Current Status = {current_status}")
+
+            df.at[csv_index, "EN Check Out"] = str(en_checkout)
             df.at[csv_index, "Timestamp Check Out"] = update["checkout"]
-            df.at[csv_index, "Duration (hr)"] = update["duration"]
+            df.at[csv_index, "Duration (hr)"] = str(update["duration"])
             df.at[csv_index, "Status"] = "CLOSED"
+
+            updateed_count += 1
+
+        if updateed_count == 0:
+            raise RuntimeError("No downtime record was updated.")
+            
         df.to_csv(file_path, index=False, encoding="utf-8-sig")
+        return updateed_count
